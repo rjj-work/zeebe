@@ -37,11 +37,14 @@ import org.springframework.util.unit.DataSize;
 
 @RunWith(Parameterized.class)
 public final class ClusteredDataDeletionTest {
+
   private static final Duration SNAPSHOT_PERIOD = Duration.ofMinutes(1);
+  private static final int SEGMENT_COUNT = 10;
+
   @Rule public final ClusteringRule clusteringRule;
 
   public ClusteredDataDeletionTest(final Consumer<BrokerCfg> configurator, final String name) {
-    this.clusteringRule = new ClusteringRule(1, 3, 3, configurator);
+    clusteringRule = new ClusteringRule(1, 3, 3, configurator);
   }
 
   @Parameters(name = "{index}: {1}")
@@ -90,7 +93,7 @@ public final class ClusteredDataDeletionTest {
     final int leaderNodeId = clusteringRule.getLeaderForPartition(1).getNodeId();
     final Broker leader = clusteringRule.getBroker(leaderNodeId);
 
-    while (getSegmentsCount(leader) <= 2) {
+    while (getSegmentsCount(leader) <= SEGMENT_COUNT) {
       clusteringRule
           .getClient()
           .newPublishMessageCommand()
@@ -105,7 +108,12 @@ public final class ClusteredDataDeletionTest {
         takeSnapshotAndWaitForReplication(Collections.singletonList(leader), clusteringRule);
 
     // then
-    TestUtil.waitUntil(() -> getSegments(leader).size() < segmentCount.get(leaderNodeId));
+    TestUtil.waitUntil(
+        () -> getSegments(leader).size() < segmentCount.get(leaderNodeId),
+        () ->
+            String.format(
+                "Expected segment count of leader to be less than %s but was %s",
+                segmentCount.get(leaderNodeId), getSegments(leader).size()));
   }
 
   @Test
@@ -117,7 +125,9 @@ public final class ClusteredDataDeletionTest {
             .filter(b -> b.getConfig().getCluster().getNodeId() != leaderNodeId)
             .collect(Collectors.toList());
 
-    while (followers.stream().map(this::getSegmentsCount).allMatch(count -> count <= 2)) {
+    while (followers.stream()
+        .map(this::getSegmentsCount)
+        .allMatch(count -> count <= SEGMENT_COUNT)) {
       clusteringRule
           .getClient()
           .newPublishMessageCommand()
@@ -137,7 +147,16 @@ public final class ClusteredDataDeletionTest {
                 .allMatch(
                     b ->
                         getSegments(b).size()
-                            < followerSegmentCounts.get(b.getConfig().getCluster().getNodeId())));
+                            < followerSegmentCounts.get(b.getConfig().getCluster().getNodeId())),
+        () ->
+            String.format(
+                "Expected segment count of followers to be less than %s but was %s",
+                followerSegmentCounts,
+                followers.stream()
+                    .collect(
+                        Collectors.toMap(
+                            follower -> follower.getConfig().getCluster().getNodeId(),
+                            follower -> getSegments(follower).size()))));
   }
 
   private Map<Integer, Integer> takeSnapshotAndWaitForReplication(

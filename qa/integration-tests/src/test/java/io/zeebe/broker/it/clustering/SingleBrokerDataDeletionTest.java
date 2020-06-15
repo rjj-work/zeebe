@@ -33,6 +33,7 @@ import org.springframework.util.unit.DataSize;
 public class SingleBrokerDataDeletionTest {
 
   private static final Duration SNAPSHOT_PERIOD = Duration.ofMinutes(1);
+  private static final int SEGMENT_COUNT = 10;
 
   @Rule
   public final ClusteringRule clusteringRule =
@@ -58,7 +59,7 @@ public class SingleBrokerDataDeletionTest {
     final var logstream = clusteringRule.getLogStream(1);
     final var reader = logstream.newLogStreamReader().join();
 
-    while (getSegmentsCount(broker) <= 2) {
+    while (getSegmentsCount(broker) <= SEGMENT_COUNT) {
       writeToLog();
     }
 
@@ -66,7 +67,7 @@ public class SingleBrokerDataDeletionTest {
     ControllableExporter.updatePosition(false);
 
     // write more events
-    while (getSegmentsCount(broker) <= 3) {
+    while (getSegmentsCount(broker) <= SEGMENT_COUNT + 1) {
       writeToLog();
     }
     // write one more to make sure last processed position in segment 3
@@ -94,7 +95,9 @@ public class SingleBrokerDataDeletionTest {
     clusteringRule.waitForNewSnapshotAtBroker(broker, firstSnapshot);
 
     // then
-    assertThat(getSegmentsCount(broker)).isLessThan(segmentsBeforeSnapshot);
+    assertThat(getSegmentsCount(broker))
+        .describedAs("Expected segment count to be less after a snapshot is taken")
+        .isLessThan(segmentsBeforeSnapshot);
   }
 
   private void writeToLog() {

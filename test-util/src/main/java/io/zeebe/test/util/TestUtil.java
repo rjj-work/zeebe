@@ -13,6 +13,7 @@ import io.zeebe.util.ZbLogger;
 import java.util.concurrent.Callable;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 
 public final class TestUtil {
@@ -41,6 +42,10 @@ public final class TestUtil {
     doRepeatedly(() -> null).until((r) -> condition.getAsBoolean(), message, args);
   }
 
+  public static void waitUntil(final BooleanSupplier condition, final Supplier<String> message) {
+    doRepeatedly(() -> null).until((r) -> condition.getAsBoolean(), message);
+  }
+
   public static void waitUntil(final BooleanSupplier condition, final int retries) {
     doRepeatedly(() -> null).until((r) -> condition.getAsBoolean(), retries);
   }
@@ -66,7 +71,11 @@ public final class TestUtil {
 
     public T until(
         final Function<T, Boolean> resultCondition, final String message, final Object... args) {
-      return until(resultCondition, (e) -> false, message, args);
+      return until(resultCondition, (e) -> false, () -> String.format(message, args));
+    }
+
+    public T until(final Function<T, Boolean> resultCondition, final Supplier<String> message) {
+      return until(resultCondition, (e) -> false, message);
     }
 
     public T until(final Function<T, Boolean> resultCondition, final int retries) {
@@ -78,7 +87,7 @@ public final class TestUtil {
         final int retries,
         final String message,
         final Object... args) {
-      return until(resultCondition, (e) -> false, retries, message, args);
+      return until(resultCondition, (e) -> false, retries, () -> String.format(message, args));
     }
 
     public T until(
@@ -96,13 +105,12 @@ public final class TestUtil {
     public T until(
         final Function<T, Boolean> resultCondition,
         final Function<Exception, Boolean> exceptionCondition,
-        final String message,
-        final Object... args) {
+        final Supplier<String> message) {
       final T result =
           whileConditionHolds(
               (t) -> !resultCondition.apply(t), (e) -> !exceptionCondition.apply(e));
 
-      assertThat(resultCondition.apply(result)).withFailMessage(message, args).isTrue();
+      assertThat(resultCondition.apply(result)).withFailMessage(message.get()).isTrue();
 
       return result;
     }
@@ -124,13 +132,12 @@ public final class TestUtil {
         final Function<T, Boolean> resultCondition,
         final Function<Exception, Boolean> exceptionCondition,
         final int retries,
-        final String message,
-        final Object... args) {
+        final Supplier<String> message) {
       final T result =
           whileConditionHolds(
               (t) -> !resultCondition.apply(t), (e) -> !exceptionCondition.apply(e), retries);
 
-      assertThat(resultCondition.apply(result)).withFailMessage(message, args).isTrue();
+      assertThat(resultCondition.apply(result)).withFailMessage(message.get()).isTrue();
 
       return result;
     }
