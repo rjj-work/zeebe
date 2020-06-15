@@ -86,9 +86,9 @@ public class SingleBrokerDataDeletionTest {
     assertThat(reader.next().getPosition()).isEqualTo(firstNonExportedPosition);
 
     // when
+    final var segmentsBeforeSnapshot = getSegmentsCount(broker);
     ControllableExporter.updatePosition(true);
     writeToLog();
-    final var segmentsBeforeSnapshot = getSegmentsCount(broker);
 
     // increase snapshot interval and wait
     clusteringRule.getClock().addTime(SNAPSHOT_PERIOD);
