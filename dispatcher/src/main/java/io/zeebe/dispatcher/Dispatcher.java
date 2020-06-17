@@ -124,8 +124,7 @@ public class Dispatcher extends Actor {
    * ClaimedFragment#abort()}. Note that the claim operation can fail if the publisher limit or the
    * buffer partition size is reached.
    *
-   * @return the new publisher position if the fragment was claimed successfully. Otherwise, the
-   *     return value is negative.
+   * @return the position for the fragment. Otherwise, the return value is negative.
    */
   public long claim(final ClaimedFragment claim, final int length) {
     return claim(claim, length, 0);
@@ -137,8 +136,7 @@ public class Dispatcher extends Actor {
    * ClaimedFragment#commit()} or {@link ClaimedFragment#abort()}. Note that the claim operation can
    * fail if the publisher limit or the buffer partition size is reached.
    *
-   * @return the new publisher position if the fragment was claimed successfully. Otherwise, the
-   *     return value is negative.
+   * @return the position for the fragment. Otherwise, the return value is negative.
    */
   public long claim(final ClaimedFragment claim, final int length, final int streamId) {
     return offer(
@@ -158,8 +156,7 @@ public class Dispatcher extends Actor {
    * ClaimedFragmentBatch#abort()}. Note that the claim operation can fail if the publisher limit or
    * the buffer partition size is reached.
    *
-   * @return the new publisher position if the batch was claimed successfully. Otherwise, the return
-   *     value is negative.
+   * @return the position for the first fragment. Otherwise, the return value is negative.
    */
   public long claim(
       final ClaimedFragmentBatch batch, final int fragmentCount, final int batchLength) {

@@ -106,7 +106,7 @@ public class LogStorageAppender extends Actor implements HealthMonitorable {
     final ByteBuffer rawBuffer = blockPeek.getRawBuffer();
     final int bytes = rawBuffer.remaining();
     final ByteBuffer copiedBuffer = ByteBuffer.allocate(bytes).put(rawBuffer).flip();
-    final Tuple<Long, Long> positions = readMinMax(copiedBuffer);
+    final Tuple<Long, Long> positions = readLowestHighestPosition(copiedBuffer);
 
     // Commit position is the position of the last event.
     appendBackpressureMetrics.newEntryToAppend();
@@ -168,7 +168,7 @@ public class LogStorageAppender extends Actor implements HealthMonitorable {
     }
   }
 
-  private Tuple<Long, Long> readMinMax(final ByteBuffer buffer) {
+  private Tuple<Long, Long> readLowestHighestPosition(final ByteBuffer buffer) {
     final var view = new UnsafeBuffer(buffer);
     final var positions = new Tuple<>(Long.MAX_VALUE, Long.MIN_VALUE);
     var offset = 0;
