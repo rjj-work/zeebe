@@ -15,6 +15,7 @@ import io.zeebe.engine.nwe.WorkflowInstanceStateTransitionGuard;
 import io.zeebe.engine.processor.KeyGenerator;
 import io.zeebe.engine.processor.TypedStreamWriter;
 import io.zeebe.engine.processor.workflow.WorkflowInstanceLifecycle;
+import io.zeebe.engine.processor.workflow.deployment.model.element.ExecutableCallActivity;
 import io.zeebe.engine.processor.workflow.deployment.model.element.ExecutableFlowElement;
 import io.zeebe.engine.processor.workflow.deployment.model.element.ExecutableFlowNode;
 import io.zeebe.engine.processor.workflow.deployment.model.element.ExecutableSequenceFlow;
@@ -254,17 +255,18 @@ public final class BpmnStateTransitionBehavior {
     containerProcessor.onChildTerminated(containerScope, containerContext, childContext);
   }
 
-  private ExecutableFlowElement getParentWorkflowScope(
+  private ExecutableCallActivity getParentWorkflowScope(
       final BpmnElementContext callActivityContext, final BpmnElementContext childContext) {
     final var workflowKey = callActivityContext.getWorkflowKey();
     final var elementId = callActivityContext.getElementId();
-    final var elementType = callActivityContext.getBpmnElementType();
+
     return stateBehavior
         .getWorkflow(workflowKey)
         .map(DeployedWorkflow::getWorkflow)
         .map(
             workflow ->
-                workflow.getElementById(elementId, elementType, ExecutableFlowElement.class))
+                workflow.getElementById(
+                    elementId, BpmnElementType.CALL_ACTIVITY, ExecutableCallActivity.class))
         .orElseThrow(
             () ->
                 new BpmnProcessingException(
