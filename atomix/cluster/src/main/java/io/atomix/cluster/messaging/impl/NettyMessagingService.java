@@ -179,10 +179,10 @@ public class NettyMessagingService implements ManagedMessagingService {
     final ProtocolRequest message = new ProtocolRequest(messageId, returnAddress, type, payload);
     if (keepAlive) {
       return executeOnPooledConnection(
-          address, type, c -> c.sendAndReceive(message, timeout), executor);
+          address, type, c -> c.sendAndReceive(message, address.host(), timeout), executor);
     } else {
       return executeOnTransientConnection(
-          address, c -> c.sendAndReceive(message, timeout), executor);
+          address, c -> c.sendAndReceive(message, address.host(), timeout), executor);
     }
   }
 

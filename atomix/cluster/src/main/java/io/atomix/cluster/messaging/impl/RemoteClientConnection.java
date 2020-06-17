@@ -48,9 +48,10 @@ final class RemoteClientConnection extends AbstractClientConnection {
 
   @Override
   public CompletableFuture<byte[]> sendAndReceive(
-      final ProtocolRequest message, final Duration timeout) {
+      final ProtocolRequest message, final String receiver, final Duration timeout) {
     final CompletableFuture<byte[]> future = new CompletableFuture<>();
-    final Callback callback = new Callback(message.id(), message.subject(), timeout, future);
+    final Callback callback =
+        new Callback(message.id(), message.subject(), receiver, timeout, future);
     channel
         .writeAndFlush(message)
         .addListener(

@@ -129,6 +129,7 @@ abstract class AbstractClientConnection implements ClientConnection {
   final class Callback {
     private final long id;
     private final String type;
+    private final String receiver;
     private final long time = System.currentTimeMillis();
     private final long timeout;
     private final ScheduledFuture<?> scheduledFuture;
@@ -137,10 +138,12 @@ abstract class AbstractClientConnection implements ClientConnection {
     Callback(
         final long id,
         final String type,
+        final String receiver,
         final Duration timeout,
         final CompletableFuture<byte[]> future) {
       this.id = id;
       this.type = type;
+      this.receiver = receiver;
       this.timeout = getTimeoutMillis(type, timeout);
       this.scheduledFuture =
           executorService.schedule(this::timeout, this.timeout, TimeUnit.MILLISECONDS);
@@ -162,7 +165,13 @@ abstract class AbstractClientConnection implements ClientConnection {
     private void timeout() {
       replyFuture.completeExceptionally(
           new TimeoutException(
-              "Request type " + type + " timed out in " + timeout + " milliseconds"));
+              "Request type "
+                  + type
+                  + " to "
+                  + receiver
+                  + " timed out in "
+                  + timeout
+                  + " milliseconds"));
       callbacks.remove(id);
     }
 

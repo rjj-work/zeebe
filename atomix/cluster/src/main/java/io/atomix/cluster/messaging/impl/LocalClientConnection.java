@@ -38,9 +38,9 @@ final class LocalClientConnection extends AbstractClientConnection {
 
   @Override
   public CompletableFuture<byte[]> sendAndReceive(
-      final ProtocolRequest message, final Duration timeout) {
+      final ProtocolRequest message, final String receiver, final Duration timeout) {
     final CompletableFuture<byte[]> future = new CompletableFuture<>();
-    new Callback(message.id(), message.subject(), timeout, future);
+    new Callback(message.id(), message.subject(), receiver, timeout, future);
     serverConnection.dispatch(message);
     return future;
   }
